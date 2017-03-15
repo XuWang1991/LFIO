@@ -1,0 +1,6 @@
+reachable(A,B):-arc(A,B).
+&&
+{arc(a,b),arc(b,c),arc(a,c);arc(a,b),arc(b,c),arc(a,c),reachable(a,c),reachable(a,b),reachable(b,c)}.
+{arc(a,b);arc(a,b),reachable(a,b)}.
+{arc(b,c);arc(b,c),reachable(b,c)}.
+

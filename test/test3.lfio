@@ -1,0 +1,8 @@
+{male(john),marry(john,mary);male(john),marry(john,mary),female(mary)}.
+{male(john),male(luke),son(luke,john);male(john),male(luke),son(luke,john),parent(john,luke)}.
+{male(john),female(jane),daughter(jane,john);male(john),female(jane),daughter(jane,john),parent(john,jane)}.
+{male(john),male(luke),son(luke,john),marry(john,mary);male(john),male(luke),son(luke,john),marry(john,mary),female(mary),parent(john,luke),parent(john,mary),son(luke,mary)}.
+{male(john),female(jane),daughter(jane,john),marry(john,mary);male(john),female(jane),daughter(jane,john),marry(john,mary),female(mary),parent(john,jane),parent(john,mary),daughter(jane,mary)}.
+{male(luke),marry(luke,anna);male(luke),marry(luke,anna),female(anna)}.
+{female(jane),marry(mike,jane);female(jane),marry(mike,jane),male(mike)}.
+

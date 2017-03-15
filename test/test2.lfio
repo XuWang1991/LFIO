@@ -1,0 +1,2 @@
+{female(anna),parent(jack,anna);female(anna),parent(jack,anna),daughter(anna,jack)}.
+{female(anna),parent(mary,anna);female(anna),parent(mary,anna),daughter(anna,mary)}.
