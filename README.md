@@ -1,7 +1,7 @@
 ## LFIO
 LFIO is an implementation for inductive learning Datalog program from input and output.
 
-LFIO could only be runned in LINUX system (We have test LFIO system in Fedora and Ubuntu and it could be runned currently)
+Notice that LFIO could only run in LINUX system (We have test LFIO system in Fedora and Ubuntu, and it could run currently)
 
 ## Install
 First off, you should install FLex (https://github.com/westes/flex/releases) and GNU Bison (http://www.gnu.org/software/bison/).
@@ -9,7 +9,8 @@ First off, you should install FLex (https://github.com/westes/flex/releases) and
 Then you could download all the files of LFIO and compile it.
 
 ```
-tar zxvf LFIO
+mkdir LFIO
 cd LFIO
+git clone https://github.com/XuWang1991/LFIO.git
 make
 ```
