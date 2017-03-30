@@ -8,7 +8,7 @@ First off, you should install FLex (https://github.com/westes/flex/releases) and
  
 Run ```sudo yum install flex bison``` to install the above two software in Fedora or Centos. Run ```sudo apt-get install flex bison``` to install them in Ubuntu.
 
-Also, you should install git to clone all the files of LFIO from GitHub to your computer. You can run ```sudo yum install git``` in Fedora or Centos, or you can run ```sudo apt-get install git``` in Ubuntu. 
+Also, you should install Git to clone all the files of LFIO from GitHub to your computer. You can run ```sudo yum install git``` in Fedora or Centos, or you can run ```sudo apt-get install git``` in Ubuntu. 
 
 Then you could download all the files of LFIO and compile it.
 
