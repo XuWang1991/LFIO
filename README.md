@@ -5,6 +5,8 @@ Notice that LFIO could only run in LINUX system (We have test LFIO system in Fed
 
 ## Install
 First off, you should install FLex (https://github.com/westes/flex/releases) and GNU Bison (http://www.gnu.org/software/bison/).
+ d asda 
+To install FLex and GNU Bison in your environment
 
 Then you could download all the files of LFIO and compile it.
 
