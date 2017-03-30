@@ -13,8 +13,7 @@ Also, you should install Git to clone all the files of LFIO from GitHub to your 
 Then you could download all the files of LFIO and compile it.
 
 ```
-mkdir LFIO
-cd LFIO
 git clone https://github.com/XuWang1991/LFIO.git
+cd LFIO
 make
 ```
