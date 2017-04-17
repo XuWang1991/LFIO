@@ -1,5 +1,5 @@
 ## LFIO
-LFIO is an implementation for inductive learning Datalog program from input and output.
+LFIO is an implementation for inductive learning Datalog program from input and output (the algorithm of LFIO can be found in the [paper](http://ilp16.doc.ic.ac.uk/program/presentation_pdfs/5)).
 
 Notice that LFIO could only run in LINUX system (We have test LFIO system in Fedora and Ubuntu, and it could run currently)
 
@@ -23,3 +23,5 @@ make
 After installing the LFIO successfully, you can use LFIO system to run some test examples which you can find in [test](https://github.com/XuWang1991/LFIO/tree/master/test) (this directory had been added in your LFIO directory when you run ```git clone https://github.com/XuWang1991/LFIO.git```). Also, an experiment had been added in your LFIO directory (you can find this experiment in the directory [experiments](https://github.com/XuWang1991/LFIO/tree/master/experiments)).
 
 These tests and experiments can be undertood easily. So you can learn how to use LFIO system to run learning tasks easily. Also, a guide for LFIO will be upload sooner.
+
+Please don't be hesitate to contact me if you have some questions about this LFIO system ([eva01wx@outlook.com](mailto:eva01wx@outlook.com)).
