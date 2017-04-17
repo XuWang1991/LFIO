@@ -24,4 +24,4 @@ After installing the LFIO successfully, you can use LFIO system to run some test
 
 These tests and experiments can be undertood easily. So you can learn how to use LFIO system to run learning tasks easily. Also, a guide for LFIO will be upload sooner.
 
-Please don't be hesitate to contact me if you have some questions about this LFIO system ([eva01wx@outlook.com](mailto:eva01wx@outlook.com)).
+Please don't be hesitate to contact me if you have any question about this LFIO system ([eva01wx@outlook.com](mailto:eva01wx@outlook.com)).
