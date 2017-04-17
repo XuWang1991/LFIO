@@ -20,4 +20,4 @@ make
 
 ## Get Started
 
-After installing the LFIO successfully, you can use LFIO system to run some test examples which you can find in 
+After installing the LFIO successfully, you can use LFIO system to run some test examples which you can find in [test](https://github.com/XuWang1991/LFIO/tree/master/test)
