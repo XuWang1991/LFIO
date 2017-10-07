@@ -59,8 +59,8 @@ void usage(char *argv[]) //help function
          << "-h, --help     Print this message and exit." << endl
          << "-g             Print the output of LFIO with generalizing by least general generalization." << endl
          << "-f             Print the result of checking over-generalization " << endl
-	     << "-p             Print the result of LFIO with generalizing by V-operator" << endl
-         << "-r             Print the result of LFIO with the redundant" << endl;
+	       << "-p             Print the result of LFIO with generalizing by V-operator" << endl;
+        //  << "-r             Print the result of LFIO with the redundant" << endl;
 }
 
 
