@@ -2319,8 +2319,8 @@ void algorithm(Rule_list *B, Ex_list *E, Rule_list *P, Rule_list *B_P)
         //algorithm1(B, temp, P, B_P);
         //optimization(temp);
 
-        // temp->input->ClearIterator();
-        // temp->output->ClearIterator();
+        temp->input->ClearIterator();
+        temp->output->ClearIterator();
         // temp->Print();
         while ((tp = temp->input->Atom_list::Iterate())&& temp)
         {
