@@ -207,6 +207,7 @@ public:
 	bool neg=0;
 	theta_list *tl=NULL;
 	substitution_list *sl = NULL;
+	bool consider = 0;
 	void Print();
 	bool operator==(Atom*);
 	Atom(Predicate*, Argu_list*);
@@ -231,6 +232,7 @@ public:
 	Atom_list *positive, *negative;
 	bool enable;
 	bool is_remove = 0;
+	bool consider = 0;
 
 	void Print();
 	Rule(Atom*, Atom_list*, Atom_list*);

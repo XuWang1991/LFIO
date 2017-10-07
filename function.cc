@@ -856,7 +856,7 @@ void theta_list::Append(theta * item)
 	List::Append((void*)item);
 }
 
-void theta_list::Remove(theta * item) 
+void theta_list::Remove(theta * item)
 {
 	List::Remove((void*)item);
 }

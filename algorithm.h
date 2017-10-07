@@ -240,6 +240,158 @@ void remove_waste_rule(Rule *r, Rule_list *arr/*, Array_substitution s[]*/)
     arr->ClearIterator();
 }
 
+bool  is_include_var_argu(Atom *at)
+{
+	Argument *temp = NULL;
+	at->al->ClearIterator();
+	temp = at->al->Iterate();
+	while (temp)
+	{
+		if (temp->data[0] <= 'Z' && temp->data[0] >= 'A')
+		{
+			at->al->ClearIterator();
+			return 1;
+		}
+		temp = at->al->Iterate();
+	}
+	at->al->ClearIterator();
+	return 0;
+}
+
+theta *add_theta(string v, string t)
+{
+    theta *temp = new theta(v, t);
+    return temp;
+}
+
+theta_list *copy_thetalist(theta_list *tl) {
+	theta *t = NULL;
+	theta_list *temp = new theta_list();
+	tl->ClearIterator();
+	t = tl->Iterate();
+	while (t) {
+		temp->Append(t);
+		t = tl->Iterate();
+	}
+	tl->ClearIterator();
+	return temp;
+}
+
+bool match_argument_in_step_of_check_subsume(Atom *a1, Atom *a2, theta_list *tl) { //a2 includes variables and a1 is ground
+	Argument *ar1 = NULL, *ar2 = NULL;
+	theta_list *temp = new theta_list();
+	theta *t = NULL;
+
+	if (a1->pre->data != a2->pre->data) {
+		return 0;
+	}
+
+	a1->al->ClearIterator();
+	a2->al->ClearIterator();
+	ar1 = a1->al->Iterate();
+	ar2 = a2->al->Iterate();
+	while (ar1 && ar2) {
+		tl->ClearIterator();
+		t = tl->Iterate();
+		while (t) {
+			if (ar2->data == t->var && ar1->data != t->term) {
+				a1->al->ClearIterator();
+				a2->al->ClearIterator();
+				tl->ClearIterator();
+				return 0;
+			}
+			if (ar2->data == t->var && ar1->data == t->term) {
+				goto br1;
+			}
+			t = tl->Iterate();
+		}
+		tl->ClearIterator();
+
+		temp->ClearIterator();
+		t = temp->Iterate();
+		while (t) {
+			if (ar2->data == t->var && ar1->data != t->term) {
+				a1->al->ClearIterator();
+				a2->al->ClearIterator();
+				temp->ClearIterator();
+				return 0;
+			}
+			if (ar2->data == t->var && ar1->data == t->term) {
+				goto br1;
+			}
+			t = temp->Iterate();
+		}
+		temp->ClearIterator();
+		if (!t) {
+			temp->Append(add_theta(ar2->data, ar1->data));
+		}
+	br1:
+		ar1 = a1->al->Iterate();
+		ar2 = a2->al->Iterate();
+	}
+	a1->al->ClearIterator();
+	a2->al->ClearIterator();
+
+	temp->ClearIterator();
+	t = temp->Iterate();
+	while (t) {
+		tl->Append(t);
+		t = temp->Iterate();
+	}
+	temp->ClearIterator();
+	return 1;
+}
+
+bool check_subsume_with_background_between_rules(Rule *r1, Rule *r2) { //where r1 is ground and r2 is belong to background
+	theta_list *tl = new theta_list();
+	Atom *a1 = NULL, *a2 = NULL;
+	//theta *t = NULL;
+	if (match_argument_in_step_of_check_subsume(r1->head, r2->head, tl) == 1) {
+		r2->positive->ClearIterator();
+		a2 = r2->positive->Iterate();
+		while (a2) {
+			r1->positive->ClearIterator();
+			a1 = r1->positive->Iterate();
+			while (a1) {
+				if (match_argument_in_step_of_check_subsume(a1, a2, tl) == 1) {
+					r1->positive->ClearIterator();
+					break;
+				}
+				a1 = r1->positive->Iterate();
+			}
+			r1->positive->ClearIterator();
+			if (!a1) {
+				r2->positive->ClearIterator();
+				return 0;
+			}
+			a2 = r2->positive->Iterate();
+		}
+		r2->positive->ClearIterator();
+		return 1;
+	}
+	return 0;
+}
+
+bool bool_subsume_with_background(Rule *r,Rule_list *rl){
+	Rule *temp=NULL;
+	//theta_list *tl = new theta_list();
+	//theta *t = NULL;
+
+	rl->ClearIterator();
+	temp = rl->Iterate();
+	while (temp) {
+		//if (is_include_var_argu(temp->head) == 1) {
+			if (check_subsume_with_background_between_rules(r, temp) == 1) {
+				rl->ClearIterator();
+				return 1;
+			}
+		//}
+		temp = rl->Iterate();
+	}
+	rl->ClearIterator();
+	return 0;
+}
+
 bool bool_subsume(Rule *r, Rule_list *arr/*, Array_substitution s[]*/)
 {
     Rule *temp = NULL;
@@ -247,7 +399,10 @@ bool bool_subsume(Rule *r, Rule_list *arr/*, Array_substitution s[]*/)
     temp = arr->Iterate();
     while (temp != NULL)
     {
-
+		if (is_include_var_argu(temp->head) == 1 && check_subsume_with_background_between_rules(r, temp) == 1) {
+			arr->ClearIterator();
+			return 1;
+		}
         if (is_equal_atom(r->head, temp->head) == 1 && is_subset(temp->positive, r->positive) == 1)
         {
             arr->ClearIterator();
@@ -846,12 +1001,6 @@ br1:
     al->ClearIterator();
 }
 
-theta *add_theta(string v, string t)
-{
-    theta *temp = new theta(v, t);
-    return temp;
-}
-
 bool is_equal_al_by_general(Argu_list *al1, Argu_list *al2, theta_list *tl)
 {
     Argument *tp1 = NULL, *tp2 = NULL;
@@ -939,24 +1088,6 @@ bool is_belong_by_general(Atom *p, Atom_list *ap, theta_list *tl)
         temp = ap->Iterate();
     }
     ap->ClearIterator();
-    return 0;
-}
-
-bool  is_include_var_argu(Atom *at)
-{
-    Argument *temp = NULL;
-    at->al->ClearIterator();
-    temp = at->al->Iterate();
-    while (temp)
-    {
-        if (temp->data[0]<='Z' && temp->data[0]>='A')
-        {
-            at->al->ClearIterator();
-            return 1;
-        }
-        temp = at->al->Iterate();
-    }
-    at->al->ClearIterator();
     return 0;
 }
 
@@ -2028,12 +2159,41 @@ bool is_fix(Atom_list *pre, Atom_list *now)
     return 1;
 }
 
+Argument *copy_argument(Argument *ar){
+  Argument *temp=new Argument(ar->data);
+  return temp;
+}
+
+Argu_list *copy_argu_list(Argu_list *al){
+  Argu_list *temp=new Argu_list();
+  Argument *ar=NULL;
+  al->ClearIterator();
+  ar=al->Iterate();
+  while(ar){
+    temp->Append(ar);
+    ar=al->Iterate();
+  }
+  al->ClearIterator();
+  return temp;
+}
+
+Predicate *copy_predicate(Predicate *p){
+  Predicate *temp=new Predicate(p->data);
+  return temp;
+}
+
+Atom *copy_atom(Atom *a){
+  Atom *temp=new Atom(a->pre,copy_argu_list(a->al));
+  return temp;
+}
+
 Atom_list *copy_atom_list(Atom_list *al){
     Atom_list *temp=new Atom_list();
     Atom *a=NULL;
     al->ClearIterator();
     a=al->Iterate();
     while(a){
+        //a->Print();cout<<endl;
         temp->Append(a);
         a=al->Iterate();
     }
@@ -2121,21 +2281,47 @@ void check_over_general(Program p)
     }
 }
 
+void filling_in_full_of_example(Example *e){
+  Atom *a=NULL;
+  e->input->ClearIterator();
+  a=e->input->Iterate();
+  while(a){
+    if(is_belong(a,e->output)==0){
+      e->output->Append(copy_atom(a));
+    }
+    a=e->input->Iterate();
+  }
+  e->input->ClearIterator();
+}
+
+void filling_in_full_of_examples(Ex_list *E){
+  Example *e=NULL;
+  E->ClearIterator();
+  e=E->Iterate();
+  while(e){
+    filling_in_full_of_example(e);
+    e=E->Iterate();
+  }
+  E->ClearIterator();
+}
+
 void algorithm(Rule_list *B, Ex_list *E, Rule_list *P, Rule_list *B_P)
 {
+    filling_in_full_of_examples(E);
     cheak_is_satisfied_by_condition(E);
     Atom *ta = NULL, *tp = NULL;
     Example *temp=NULL;
     //temp = E->Iterate();
+    E->ClearIterator();
     while ((temp = E->Ex_list::Iterate()))
     {
         //temp->Print();
         //algorithm1(B, temp, P, B_P);
         //optimization(temp);
 
-        temp->input->ClearIterator();
-        temp->output->ClearIterator();
-        temp->Print();
+        // temp->input->ClearIterator();
+        // temp->output->ClearIterator();
+        // temp->Print();
         while ((tp = temp->input->Atom_list::Iterate())&& temp)
         {
             if (is_belong(tp, temp->output) == 1 /*&&ta*/)
@@ -2248,6 +2434,323 @@ void lgg_program(Program p, Program pp)
         r1 = p.P->Iterate();
     }
     p.P->ClearIterator();
+}
+
+void reset_consider(Atom_list *al) {
+	Atom *temp = NULL;
+	al->ClearIterator();
+	temp = al->Iterate();
+	while (temp) {
+		temp->consider = 0;
+		temp = al->Iterate();
+	}
+	al->ClearIterator();
+}
+
+bool check_if_variable_exist_in_substitution(substitution *s, theta *t) {
+	theta *temp = NULL;
+	s->tl->ClearIterator();
+	temp = s->tl->Iterate();
+	while (temp) {
+		if (temp->var == t->var && temp->term != t->term) {
+			s->tl->ClearIterator();
+			return 1;
+		}
+		temp = s->tl->Iterate();
+	}
+	s->tl->ClearIterator();
+	return 0;
+}
+
+bool check_if_exist_conflict_between_theta(Atom *a1, Atom *a2, substitution *s) {
+	theta *temp = NULL;
+	Argument *ar1 = NULL, *ar2 = NULL;
+	a1->al->ClearIterator();
+	a2->al->ClearIterator();
+	ar1 = a1->al->Iterate();
+	ar2 = a2->al->Iterate();
+	while (ar1 && ar2) {
+		temp = add_theta(ar1->data, ar2->data);
+		if (check_if_variable_exist_in_substitution(s, temp) == 1) {
+			a1->al->ClearIterator();
+			a2->al->ClearIterator();
+			return 1;
+		}
+		if (check_if_variable_exist_in_substitution(s, temp) == 0) {
+			s->tl->Append(temp);
+		}
+		ar1 = a1->al->Iterate();
+		ar2 = a2->al->Iterate();
+	}
+	a1->al->ClearIterator();
+	a2->al->ClearIterator();
+	return 0;
+}
+
+bool check_if_inverse_resolution(Atom_list *al1, Atom_list *al2) { //al1 is the body of C1 and al2 is the body of R
+	reset_consider(al1);
+	reset_consider(al2);
+	Atom *a1 = NULL, *a2 = NULL;
+	substitution *s = new substitution();
+	al1->ClearIterator();
+	a1 = al1->Iterate();
+	while (a1) {
+		al2->ClearIterator();
+		a2 = al2->Iterate();
+		while (a2) {
+			if (a1->pre->data == a2->pre->data && a1->consider == 0 && a2->consider == 0) {
+				if (check_if_exist_conflict_between_theta(a1, a2, s) == 1) {
+					al1->ClearIterator();
+					al2->ClearIterator();
+					return 0;
+				}
+				a1->consider = 1;
+				a2->consider = 1;
+				break;
+			}
+			a2 = al2->Iterate();
+		}
+		if (!a2) {
+			al1->ClearIterator();
+			al2->ClearIterator();
+			return 0;
+		}
+		al2->ClearIterator();
+		a1 = al1->Iterate();
+	}
+	al1->ClearIterator();
+	if (!a1) {
+		al1->ClearIterator();
+		al2->ClearIterator();
+		al1->tl = s->tl;
+		return 1;
+	}
+}
+
+Argument *add_argument(string s) {
+	Argument *temp = new Argument(s);
+	return temp;
+}
+
+Atom *construct_head_of_C2(Atom *a, theta_list *tl) {
+	Argu_list *al = new Argu_list();
+	theta *t = NULL;
+	Argument *ar = NULL;
+	a->al->ClearIterator();
+	ar = a->al->Iterate();
+	while (ar) {
+		tl->ClearIterator();
+		t = tl->Iterate();
+		while (t) {
+			if (t->var == ar->data) {
+				al->Append(add_argument(t->term));
+				tl->ClearIterator();
+				break;
+			}
+			t = tl->Iterate();
+		}
+		tl->ClearIterator();
+		ar = a->al->Iterate();
+	}
+	a->al->ClearIterator();
+	Atom *temp = new Atom(a->pre, al);
+	return temp;
+}
+
+bool is_argument_equal_by_thetalist(Argument *ar1, Argument *ar2, theta_list *tl) {
+	theta *t = NULL;
+	tl->ClearIterator();
+	t = tl->Iterate();
+	while (t) {
+		if (t->var == ar1->data && t->term == ar2->data) {
+			tl->ClearIterator();
+			return 1;
+		}
+		t = tl->Iterate();
+	}
+	tl->ClearIterator();
+	return 0;
+}
+
+bool is_atom_equal_by_thetalist(Atom *a1, Atom *a2, theta_list *tl) {
+	if (a1->pre->data != a2->pre->data)
+		return 0;
+	Argument *ar1 = NULL, *ar2 = NULL;
+	a1->al->ClearIterator();
+	a2->al->ClearIterator();
+	ar1 = a1->al->Iterate();
+	ar2 = a2->al->Iterate();
+	while (ar1 && ar2) {
+		if (is_argument_equal_by_thetalist(ar1, ar2, tl) == 0) {
+			a1->al->ClearIterator();
+			a2->al->ClearIterator();
+			return 0;
+		}
+		ar1 = a1->al->Iterate();
+		ar2 = a2->al->Iterate();
+	}
+	a1->al->ClearIterator();
+	a2->al->ClearIterator();
+	return 1;
+}
+
+Rule *v_operator(Rule *c1, Rule *r) { //c1 is background clause and r is ground clause
+	Atom *a1 = NULL, *a2 = NULL;
+	Atom_list *al = NULL;
+	al = copy_atom_list(r->positive);
+	al->Append(construct_head_of_C2(c1->head, c1->positive->tl));
+	c1->positive->ClearIterator();
+	a1 = c1->positive->Iterate();
+	while (a1) {
+		r->positive->ClearIterator();
+		a2 = r->positive->Iterate();
+		while (a2) {
+			if (is_atom_equal_by_thetalist(a1, a2, c1->positive->tl) == 1) {
+				al->Remove(a2);
+				break;
+			}
+			a2 = r->positive->Iterate();
+		}
+		r->positive->ClearIterator();
+		a1 = c1->positive->Iterate();
+	}
+	c1->positive->ClearIterator();
+	Rule *temp = new Rule(r->head, al, NULL);
+	return temp;
+}
+
+void compute_voperator(Program p) {
+	Rule *r1 = NULL, *r2 = NULL;
+	Rule *temp = NULL;
+
+	p.B->ClearIterator();
+	r1 = p.B->Iterate();
+	while (r1) {
+		p.P->ClearIterator();
+		r2 = p.P->Iterate();
+		while (r2) {
+      //r2->Print();
+			if (check_if_inverse_resolution(r1->positive, r2->positive) == 1) {
+        p.P->Remove(r2);
+        temp = v_operator(r1, r2);
+        //temp->Print();
+
+        p.P->Insert(temp);
+        //continue;
+			}
+			r2 = p.P->Iterate();
+		}
+		p.P->ClearIterator();
+		r1 = p.B->Iterate();
+	}
+	p.B->ClearIterator();
+}
+
+Rule *inverse_resolution(Rule *c1, Rule *r) { //this function is different from v_operator by adding inverse substitution
+
+}
+
+Rule_list *copy_rule_list(Rule_list *rl) {
+	Rule_list *copy = new Rule_list();
+	Rule *temp = NULL;
+	rl->ClearIterator();
+	temp = rl->Iterate();
+	while (temp) {
+		copy->Append(temp);
+		temp = rl->Iterate();
+	}
+	rl->ClearIterator();
+	return copy;
+}
+
+Rule *copy_rule(Rule *r) {
+	Atom_list *al = copy_atom_list(r->positive);
+	Rule *copy = new Rule(r->head, al, NULL);
+	return copy;
+}
+
+Rule *construct_rule_delete_atom(Rule *r, Atom *a) {
+	Atom_list *al = new Atom_list();
+	Atom *temp = NULL;
+	r->positive->ClearIterator();
+	temp = r->positive->Iterate();
+	while (temp) {
+		if (temp != a) {
+			al->Append(temp);
+		}
+		temp = r->positive->Iterate();
+	}
+	r->positive->ClearIterator();
+	Rule *rule = new Rule(r->head, al, NULL);
+	return rule;
+}
+
+bool check_uniform_constains(Rule *r, Rule_list *rl){
+
+}
+
+void redundant_of_atom(Rule_list *rl) {
+	Rule *temp = NULL;
+	Atom *a = NULL, *a1=NULL;
+	Rule *r = NULL;
+	Rule *copy = NULL;
+	rl->ClearIterator();
+	temp = rl->Iterate();
+	while (temp) {
+		copy = copy_rule(temp);
+		temp->positive->ClearIterator();
+		a = temp->positive->Iterate();
+		while (a) {
+			if (a->consider == 0) {
+				a->consider = 1;
+        a1=copy_atom(a);
+				r = construct_rule_delete_atom(copy, a);
+				if (check_uniform_constains(r, rl) == 1) {
+					temp->positive->Remove(a);
+					continue;
+				}
+			}
+			a = temp->positive->Iterate();
+		}
+		temp->positive->ClearIterator();
+		temp = rl->Iterate();
+	}
+	rl->ClearIterator();
+}
+
+Rule_list *construct_rulelist_delete_rule(Rule_list *rl, Rule *r) {
+	Rule_list *temprl = new Rule_list();
+	Rule* temp = NULL;
+	rl->ClearIterator();
+	temp = rl->Iterate();
+	while (temp) {
+		if (temp != r) {
+			temprl->Append(temp);
+		}
+		temp = rl->Iterate();
+	}
+	rl->ClearIterator();
+	return temprl;
+}
+
+void redundant_of_rule(Rule_list *rl){
+	Rule *temp = NULL;
+	Rule_list *copy = copy_rule_list(rl);
+	Rule_list *temprl = NULL;
+	rl->ClearIterator();
+	temp = rl->Iterate();
+	while (temp) {
+		if (temp->consider == 0) {
+			temp->consider = 1;
+			temprl = construct_rulelist_delete_rule(copy, temp);
+			if (check_uniform_constains(temp, temprl) == 1) {
+				rl->Remove(temp);
+				continue;
+			}
+		}
+		temp = rl->Iterate();
+	}
+	rl->ClearIterator();
 }
 
 #endif
