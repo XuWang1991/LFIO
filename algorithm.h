@@ -6,6 +6,47 @@
 Str_list *termlist = new Str_list;
 Str_list *predicatelist = new Str_list;
 
+Argument *copy_argument(Argument *ar){
+  Argument *temp=new Argument(ar->data);
+  return temp;
+}
+
+Argu_list *copy_argu_list(Argu_list *al){
+  Argu_list *temp=new Argu_list();
+  Argument *ar=NULL;
+  al->ClearIterator();
+  ar=al->Iterate();
+  while(ar){
+    temp->Append(ar);
+    ar=al->Iterate();
+  }
+  al->ClearIterator();
+  return temp;
+}
+
+Predicate *copy_predicate(Predicate *p){
+  Predicate *temp=new Predicate(p->data);
+  return temp;
+}
+
+Atom *copy_atom(Atom *a){
+  Atom *temp=new Atom(a->pre,copy_argu_list(a->al));
+  return temp;
+}
+Atom_list *copy_atom_list(Atom_list *al){
+    Atom_list *temp=new Atom_list();
+    Atom *a=NULL;
+    al->ClearIterator();
+    a=al->Iterate();
+    while(a){
+        //a->Print();cout<<endl;
+        temp->Append(copy_atom(a));
+        a=al->Iterate();
+    }
+    al->ClearIterator();
+    return temp;
+}
+
 bool is_equal_al(Argu_list *al1,Argu_list *al2)
 {
     if (al1 && al2)
@@ -417,7 +458,7 @@ bool bool_subsume(Rule *r, Rule_list *arr/*, Array_substitution s[]*/)
 
 void rule_add(Atom *a, Rule_list *P, Rule_list *B_P, Atom_list *in)
 {
-    Rule *r = new Rule(a, in, NULL);
+    Rule *r = new Rule(a, copy_atom_list(in), NULL);
     if (bool_subsume(r, B_P) == 0)
     {
         remove_waste_rule(r, P);
@@ -1292,28 +1333,40 @@ br1:
 
 }
 
-
-
-void lgg_term(Argument *a, Argument *b)
-{
-    Argument *temp;
-    if (a->data == b->data)
-    {
-        a->argu_of_lgg = a;
-        a->argu_of_lgg->is_general = 0;
-        b->argu_of_lgg = a;
-        b->argu_of_lgg->is_general = 0;
-    }
-    else
-    {
-        string str = a->data + b->data;
-        temp = new Argument(str);
-        a->argu_of_lgg = temp;
-        a->argu_of_lgg->ground_data = str;
-        b->argu_of_lgg = temp;
-        b->argu_of_lgg->ground_data = str;
-    }
+Argument *lgg_term(Argument *a, Argument *b){
+  if(a->data==b->data){
+    return a;
+  }
+  else{
+    string str = a->data + b->data;
+    Argument *temp=new Argument(str);
+    temp->consider=1;
+    return temp;
+  }
 }
+
+// void lgg_term(Argument *a, Argument *b)
+// {
+//     Argument *temp;
+//     if (a->data == b->data)
+//     {
+//         a->argu_of_lgg = a;
+//         a->argu_of_lgg->is_general = 0;
+//         b->argu_of_lgg = a;
+//         b->argu_of_lgg->is_general = 0;
+//     }
+//     else
+//     {
+//         string str = a->data + b->data;
+//         temp = new Argument(str);
+//         temp->consider=1;
+//         a->argu_of_lgg = temp;
+//         a->argu_of_lgg->ground_data = str;
+//         b->argu_of_lgg = temp;
+//         b->argu_of_lgg->ground_data = str;
+//         //a->consider=1;b->consider=1;
+//     }
+// }
 
 Argu_list *lgg_arlist(Argu_list *a, Argu_list *b)
 {
@@ -1327,8 +1380,8 @@ Argu_list *lgg_arlist(Argu_list *a, Argu_list *b)
     while (tp1 && tp2)
     {
         //if (tp1->argu_of_lgg == NULL && tp2->argu_of_lgg == NULL) {
-        lgg_term(tp1, tp2);
-        temp->Append(tp1->argu_of_lgg);
+        // lgg_term(tp1, tp2);
+        temp->Append(lgg_term(tp1,tp2));
         //}
         tp1 = a->Iterate();
         tp2 = b->Iterate();
@@ -1369,176 +1422,274 @@ Atom_list *lgg_atlist(Atom_list *a,Atom_list *b)
     return temp;
 }
 
+void print_consider(Rule *r){
+  Atom *a=NULL;
+  Argument *ar=NULL;
+  r->head->al->ClearIterator();
+  ar=r->head->al->Iterate();
+  while(ar){
+    if(ar->consider==1)
+      cout<<ar->data<<" ";
+    ar=r->head->al->Iterate();
+  }
+  r->head->al->ClearIterator();
+
+  r->positive->ClearIterator();
+  a=r->positive->Iterate();
+  while(a){
+    a->al->ClearIterator();
+    ar=a->al->Iterate();
+    while(ar){
+      if(ar->consider==1)
+        cout<<ar->data<<" ";
+      ar=a->al->Iterate();
+    }
+    a->al->ClearIterator();
+    a=r->positive->Iterate();
+  }
+  r->positive->ClearIterator();
+  cout<<endl;
+}
+
 void set_arity(Rule *r)
 {
+  // r->Print();
+  // print_consider(r);
+    theta_list *tl=new theta_list();
+    theta *t=NULL;
     string s = "A";
     Argument *tp1 = NULL, *tp2 = NULL;
     Atom *at1 = NULL, *at2 = NULL;
     r->head->al->ClearIterator();
     tp1 = r->head->al->Iterate();
-    if (tp1)
+    while (tp1)
     {
-        if (tp1->is_general==1)
-        {
-            tp1->data = s;
-            tp1->sl = termlist;
-            s[0] += 1;
+      // cout<<tp1->data<<endl;
+      if(tp1->consider==1){
+        tl->ClearIterator();
+        t=tl->Iterate();
+        while(t){
+          // t->Print();
+          // cout<<tp1->data<<endl;
+          if(t->term==tp1->data){
+            tp1->data=t->var;
+            tl->ClearIterator();
+            break;
+          }
+          t=tl->Iterate();
         }
-        tp1 = r->head->al->Iterate();
-        while (tp1)
-        {
-            r->head->al->ClearIterator();
-            tp2 = r->head->al->Iterate();
-            while (tp2 != tp1)
-            {
-                if (tp2->ground_data == tp1->ground_data)
-                    tp1->data = tp2->data;
-                tp2 = r->head->al->Iterate();
-            }
-            if (tp2 == tp1)
-            {
-                if (tp1->is_general == 1)
-                {
-                    tp1->data = s;
-                    tp1->sl = termlist;
-                    s[0] += 1;
-                }
-                tp1 = r->head->al->Iterate();
-            }
+        tl->ClearIterator();
+        if(!t){
+          // cout<<tp1->data<<endl;
+          tl->Insert(add_theta(s,tp1->data));
+          tp1->data=s;
+          // cout<<s<<endl;
+
+          s[0] += 1;
         }
-        r->head->al->ClearIterator();
+      }
+      tp1 = r->head->al->Iterate();
+
+      //cout<<tp1->data<<endl;
+        // if (tp1->is_general == 1)
+        // {
+        //     tp1->data = s;
+        //     tp1->sl = termlist;
+        //     s[0] += 1;
+        // }
+        // tp1 = r->head->al->Iterate();
+        // while (tp1)
+        // {
+        //     r->head->al->ClearIterator();
+        //     tp2 = r->head->al->Iterate();
+        //     while (tp2 != tp1)
+        //     {
+        //         if (tp2->ground_data == tp1->ground_data)
+        //             tp1->data = tp2->data;
+        //         tp2 = r->head->al->Iterate();
+        //     }
+        //     if (tp2 == tp1)
+        //     {
+        //         if (tp1->is_general == 1)
+        //         {
+        //             tp1->data = s;
+        //             tp1->sl = termlist;
+        //             s[0] += 1;
+        //         }
+        //         tp1 = r->head->al->Iterate();
+        //     }
+        // }
+        // r->head->al->ClearIterator();
     }
     r->head->al->ClearIterator();
 
     r->positive->ClearIterator();
     at1 = r->positive->Iterate();
-    if (at1)
+    while (at1)
     {
         at1->al->ClearIterator();
         tp1 = at1->al->Iterate();
-        while (tp1)
-        {
-            r->head->al->ClearIterator();
-            tp2 = r->head->al->Iterate();
-            while (tp2)
-            {
-                if (tp1->ground_data == tp2->ground_data)
-                {
-                    tp1->data = tp2->data;
-                    r->head->al->ClearIterator();
-                    goto br;
-                }
-                tp2 = r->head->al->Iterate();
+        while (tp1){
+          // cout<<tp1->data<<endl;
+          if(tp1->consider==1){
+            tl->ClearIterator();
+            t=tl->Iterate();
+            while(t){
+              // t->Print();
+              // cout<<tp1->data<<endl;
+              if(t->term==tp1->data){
+                tp1->data=t->var;
+                tl->ClearIterator();
+                break;
+              }
+              t=tl->Iterate();
             }
-            r->head->al->ClearIterator();
+            tl->ClearIterator();
+            if(!t){
+              // cout<<tp1->data<<endl;
+              tl->Insert(add_theta(s,tp1->data));
+              tp1->data=s;
+              // cout<<s<<endl;
 
-            at1->al->ClearIterator();
-            tp2 = at1->al->Iterate();
-            while (tp2 != tp1)
-            {
-                if (tp2->ground_data == tp1->ground_data)
-                    tp1->data = tp2->data;
-                tp2 = at1->al->Iterate();
+              s[0] += 1;
             }
-            if (tp2 == tp1)
-            {
-                if (tp1->is_general == 1)
-                {
-                    tp1->data = s;
-                    tp1->sl = termlist;
-                    s[0] += 1;
-                }
-                tp1 = at1->al->Iterate();
-            }
-
-            if (1 < 0)
-            {
-br:
-                tp1 = at1->al->Iterate();
-            }
+          }
+          tp1 = at1->al->Iterate();
         }
         at1->al->ClearIterator();
-
         at1 = r->positive->Iterate();
-        while (at1)
-        {
-            at1->al->ClearIterator();
-            tp1 = at1->al->Iterate();
-            while (tp1)
-            {
-                r->head->al->ClearIterator();
-                tp2 = r->head->al->Iterate();
-                while (tp2)
-                {
-                    if (tp1->ground_data == tp2->ground_data)
-                    {
-                        tp1->data = tp2->data;
-                        r->head->al->ClearIterator();
-                        goto br1;
-                    }
-                    tp2 = r->head->al->Iterate();
-                }
-                r->head->al->ClearIterator();
-
-                r->positive->ClearIterator();
-                at2 = r->positive->Iterate();
-                while (at2 != at1)
-                {
-                    at2->al->ClearIterator();
-                    tp2 = at2->al->Iterate();
-                    while (tp2)
-                    {
-                        if (tp1->ground_data == tp2->ground_data)
-                        {
-                            tp1->data = tp2->data;
-                            at2->al->ClearIterator();
-                            goto br1;
-                        }
-                        tp2 = at2->al->Iterate();
-                    }
-                    at2->al->ClearIterator();
-                    at2 = r->positive->Iterate();
-                }
-                if (at2 == at1)
-                {
-                    at1->al->ClearIterator();
-                    tp2 = at1->al->Iterate();
-                    while (tp2 != tp1)
-                    {
-                        if (tp2->ground_data == tp1->ground_data)
-                            tp1->data = tp2->data;
-                        tp2 = at1->al->Iterate();
-                    }
-                    if (tp2 == tp1)
-                    {
-                        if (tp1->is_general == 1)
-                        {
-                            tp1->data = s;
-                            tp1->sl = termlist;
-                            s[0] += 1;
-                        }
-                        tp1 = at1->al->Iterate();
-                    }
-                }
-
-                if (1 < 0)
-                {
-br1:
-                    tp1 = at1->al->Iterate();
-                }
-            }
-            at1->al->ClearIterator();
-            r->positive->ClearIterator();
-            at2 = r->positive->Iterate();
-            while (at2 != at1)
-            {
-                at2 = r->positive->Iterate();
-            }
-            at1 = r->positive->Iterate();
-        }
-        r->positive->ClearIterator();
     }
     r->positive->ClearIterator();
+
+//     r->positive->ClearIterator();
+//     at1 = r->positive->Iterate();
+//     if (at1)
+//     {
+//         at1->al->ClearIterator();
+//         tp1 = at1->al->Iterate();
+//         while (tp1)
+//         {
+//             r->head->al->ClearIterator();
+//             tp2 = r->head->al->Iterate();
+//             while (tp2)
+//             {
+//                 if (tp1->ground_data == tp2->ground_data)
+//                 {
+//                     tp1->data = tp2->data;
+//                     r->head->al->ClearIterator();
+//                     goto br;
+//                 }
+//                 tp2 = r->head->al->Iterate();
+//             }
+//             r->head->al->ClearIterator();
+//
+//             at1->al->ClearIterator();
+//             tp2 = at1->al->Iterate();
+//             while (tp2 != tp1)
+//             {
+//                 if (tp2->ground_data == tp1->ground_data)
+//                     tp1->data = tp2->data;
+//                 tp2 = at1->al->Iterate();
+//             }
+//             if (tp2 == tp1)
+//             {
+//                 if (tp1->is_general == 1)
+//                 {
+//                     tp1->data = s;
+//                     tp1->sl = termlist;
+//                     s[0] += 1;
+//                 }
+//                 tp1 = at1->al->Iterate();
+//             }
+//
+//             if (1 < 0)
+//             {
+// br:
+//                 tp1 = at1->al->Iterate();
+//             }
+//         }
+//         at1->al->ClearIterator();
+//
+//         at1 = r->positive->Iterate();
+//         while (at1)
+//         {
+//             at1->al->ClearIterator();
+//             tp1 = at1->al->Iterate();
+//             while (tp1)
+//             {
+//                 r->head->al->ClearIterator();
+//                 tp2 = r->head->al->Iterate();
+//                 while (tp2)
+//                 {
+//                     if (tp1->ground_data == tp2->ground_data)
+//                     {
+//                         tp1->data = tp2->data;
+//                         r->head->al->ClearIterator();
+//                         goto br1;
+//                     }
+//                     tp2 = r->head->al->Iterate();
+//                 }
+//                 r->head->al->ClearIterator();
+//
+//                 r->positive->ClearIterator();
+//                 at2 = r->positive->Iterate();
+//                 while (at2 != at1)
+//                 {
+//                     at2->al->ClearIterator();
+//                     tp2 = at2->al->Iterate();
+//                     while (tp2)
+//                     {
+//                         if (tp1->ground_data == tp2->ground_data)
+//                         {
+//                             tp1->data = tp2->data;
+//                             at2->al->ClearIterator();
+//                             goto br1;
+//                         }
+//                         tp2 = at2->al->Iterate();
+//                     }
+//                     at2->al->ClearIterator();
+//                     at2 = r->positive->Iterate();
+//                 }
+//                 if (at2 == at1)
+//                 {
+//                     at1->al->ClearIterator();
+//                     tp2 = at1->al->Iterate();
+//                     while (tp2 != tp1)
+//                     {
+//                         if (tp2->ground_data == tp1->ground_data)
+//                             tp1->data = tp2->data;
+//                         tp2 = at1->al->Iterate();
+//                     }
+//                     if (tp2 == tp1)
+//                     {
+//                         if (tp1->is_general == 1)
+//                         {
+//                             tp1->data = s;
+//                             tp1->sl = termlist;
+//                             s[0] += 1;
+//                         }
+//                         tp1 = at1->al->Iterate();
+//                     }
+//                 }
+//
+//                 if (1 < 0)
+//                 {
+// br1:
+//                     tp1 = at1->al->Iterate();
+//                 }
+//             }
+//             at1->al->ClearIterator();
+//             r->positive->ClearIterator();
+//             at2 = r->positive->Iterate();
+//             while (at2 != at1)
+//             {
+//                 at2 = r->positive->Iterate();
+//             }
+//             at1 = r->positive->Iterate();
+//         }
+//         r->positive->ClearIterator();
+//     }
+//     r->positive->ClearIterator();
 }
 
 Rule *lgg_rule(Rule *a, Rule *b)
@@ -1547,7 +1698,9 @@ Rule *lgg_rule(Rule *a, Rule *b)
 
     Rule *temp = NULL;
     temp = new Rule(lgg_atom(a->head,b->head),lgg_atlist(a->positive,b->positive),NULL);
+    //temp->Print();
     set_arity(temp);
+    //temp->Print();
     a->is_remove = 1;
     b->is_remove = 1;
     return temp;
@@ -1555,19 +1708,26 @@ Rule *lgg_rule(Rule *a, Rule *b)
 
 bool is_same_length(Atom_list *a, Atom_list *b)
 {
+    int i=0,j=0;
     Atom *tp1 = NULL, *tp2 = NULL;
     a->ClearIterator();
-    b->ClearIterator();
     tp1 = a->Iterate();
-    tp2 = b->Iterate();
-    while (tp1 && tp2)
+    while (tp1)
     {
+        i++;
         tp1 = a->Iterate();
-        tp2 = b->Iterate();
     }
     a->ClearIterator();
+
     b->ClearIterator();
-    if (tp1 == NULL && tp2 == NULL)
+    tp2 = b->Iterate();
+    while(tp2){
+        j++;
+        tp2 = b->Iterate();
+    }
+    b->ClearIterator();
+
+    if (i==j)
     {
         return 1;
     }
@@ -2159,47 +2319,9 @@ bool is_fix(Atom_list *pre, Atom_list *now)
     return 1;
 }
 
-Argument *copy_argument(Argument *ar){
-  Argument *temp=new Argument(ar->data);
-  return temp;
-}
 
-Argu_list *copy_argu_list(Argu_list *al){
-  Argu_list *temp=new Argu_list();
-  Argument *ar=NULL;
-  al->ClearIterator();
-  ar=al->Iterate();
-  while(ar){
-    temp->Append(ar);
-    ar=al->Iterate();
-  }
-  al->ClearIterator();
-  return temp;
-}
 
-Predicate *copy_predicate(Predicate *p){
-  Predicate *temp=new Predicate(p->data);
-  return temp;
-}
 
-Atom *copy_atom(Atom *a){
-  Atom *temp=new Atom(a->pre,copy_argu_list(a->al));
-  return temp;
-}
-
-Atom_list *copy_atom_list(Atom_list *al){
-    Atom_list *temp=new Atom_list();
-    Atom *a=NULL;
-    al->ClearIterator();
-    a=al->Iterate();
-    while(a){
-        //a->Print();cout<<endl;
-        temp->Append(a);
-        a=al->Iterate();
-    }
-    al->ClearIterator();
-    return temp;
-}
 
 void print_substitution_in_atomlist(Atom_list *al){
     Atom *temp=NULL;
@@ -2405,35 +2527,51 @@ void lgg_program(Program p, Program pp)
     r1 = p.P->Iterate();
     while (r1 != NULL)
     {
+      // if(r1->consider==0){
+        p.P->ClearIterator();
         r2 = p.P->Iterate();
         while (r2 != NULL)
         {
+          // if(r2->consider==0){
             if (r1 != r2)
             {
                 if (check_lgg(r1, r2) == 1)
                 {
+                    // r1->Print();
+                    // r2->Print();
                     temp = lgg_rule(r1, r2);
+                    // r1->consider=1;r2->consider=1;
+                    p.P->Remove(r1);
+                    p.P->Remove(r2);
+                    // temp->Print();
                     //remove_waste_rule(temp, pp.P);
                     if (bool_subsume(temp, pp.P) == 0)
-                        pp.P->Append(temp);
-                    break;
+                        p.P->Insert(temp);
+                    p.P->ClearIterator();
+                    goto br1;
                 }
             }
-            r2 = p.P->Iterate();
+          // }
+          r2 = p.P->Iterate();
         }
+
         if (r2 == NULL && r1->is_remove == 0)
         {
-            pp.P->Append(r1);
+          r1->consider=1;
+            p.P->Insert(r1);
         }
-        p.P->ClearIterator();
-        r2 = p.P->Iterate();
-        while (r2 != r1)
-        {
-            r2 = p.P->Iterate();
-        }
-        r1 = p.P->Iterate();
-    }
-    p.P->ClearIterator();
+        // p.P->ClearIterator();
+        // r2 = p.P->Iterate();
+        // while (r2 != r1)
+        // {
+        //     r2 = p.P->Iterate();
+        // }
+    // }
+    br1:
+    r1 = p.P->Iterate();
+
+  }
+  p.P->ClearIterator();
 }
 
 void reset_consider(Atom_list *al) {

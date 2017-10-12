@@ -143,7 +143,7 @@ int main(int argc, char **argv) {
 		redundant_of_atom(lfio.P);
 		redundant_of_rule(lfio.P);
 	}
-    if (gene == 0){
+    // if (gene == 0){
         lfio.P->ClearIterator();
         tr = lfio.P->Iterate();
         if (tr)
@@ -153,20 +153,20 @@ int main(int argc, char **argv) {
             tr = lfio.P->Iterate();
         }
         lfio.P->ClearIterator();
-    }
+    // }
 
     if (gene == 1){
 
         lgg_program(lfio,pp);
-        pp.P->ClearIterator();
-        tr = pp.P->Iterate();
+        lfio.P->ClearIterator();
+        tr = lfio.P->Iterate();
         if (tr)
             cout << "Output of LFIO by generalization :" << endl;
         while (tr) {
             tr->Print();
-            tr = pp.P->Iterate();
+            tr = lfio.P->Iterate();
         }
-        pp.P->ClearIterator();
+        lfio.P->ClearIterator();
         cout<<endl;
     }
 

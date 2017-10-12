@@ -174,6 +174,7 @@ public:
     string general_data="";
 	bool is_variable = 0;
 	bool is_general = 1;
+	bool consider=0;
 	Argument *argu_of_lgg = NULL;
 	void Print();
 	bool operator==(Argument*);
